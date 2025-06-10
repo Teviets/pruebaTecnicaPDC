@@ -12,6 +12,8 @@ import CustomDialog from '../Dialog/CustomDialog.jsx';
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 
+const excludedColumns = ['id', 'id_pais', 'id_departamento', 'id_municipio', 'id_emporesa'];
+
 export default function CustomTable({ data = [], remove, edit, type }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -20,10 +22,13 @@ export default function CustomTable({ data = [], remove, edit, type }) {
 
   const columns = Object.keys(data[0]).map((key) => ({
     id: key,
-    label: key.charAt(0).toUpperCase() + key.slice(1),
+    label: key
+      .replace(/_/g, ' ')               // reemplaza '_' por espacio
+      .replace(/\b\w/g, l => l.toUpperCase()), // mayúscula en cada palabra
     minWidth: 100,
     align: 'left',
-  }))
+  }));
+
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -41,7 +46,7 @@ export default function CustomTable({ data = [], remove, edit, type }) {
           <TableHead>
             <TableRow>
               {columns
-                .filter((column) => column.id !== 'id')
+                .filter((column) => !excludedColumns.includes(column.id))
                 .map((column) => (
                   <TableCell
                     key={column.id}
@@ -61,7 +66,7 @@ export default function CustomTable({ data = [], remove, edit, type }) {
             .map((row, rowIndex) => (
               <TableRow hover tabIndex={-1} key={rowIndex}>
                 {columns
-                  .filter((column) => column.id !== 'id')
+                  .filter((column) => !excludedColumns.includes(column.id))
                   .map((column) => (
                     <TableCell key={column.id} align={column.align}>
                       {String(row[column.id])}

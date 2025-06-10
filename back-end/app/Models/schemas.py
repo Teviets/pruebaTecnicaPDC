@@ -46,10 +46,24 @@ class EmpresaBase(BaseModel):
     id_departamento: int
     id_municipio: int
 
-class EmpresaOut(EmpresaBase):
+class EmpresaOut(BaseModel):
     id: int
+    pais: Optional[str]
+    departamento: Optional[str]
+    municipio: Optional[str]
+    nombre_comercial: Optional[str]
+    razon_social: Optional[str]
+    nit: str
+    telefono: Optional[str]
+    correo: Optional[str]
+    id_pais: int
+    id_departamento: int
+    id_municipio: int
+    
+
     class Config:
         from_attributes = True
+
 
 class ColaboradorBase(BaseModel):
     nombre_completo: str

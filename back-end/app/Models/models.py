@@ -38,7 +38,12 @@ class Empresa(Base):
     telefono = Column(String(50))
     correo = Column(String(100))
 
+    pais = relationship("Pais")
+    departamento = relationship("Departamento")
+    municipio = relationship("Municipio")
+
     colaboradores = relationship("EmpresaColaborador", back_populates="empresa")
+
 
 class Colaborador(Base):
     __tablename__ = "colaborador"

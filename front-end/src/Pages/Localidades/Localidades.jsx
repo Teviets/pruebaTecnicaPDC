@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Button } from '@mui/material';
 
 import CustomTable from '../../Components/Table/CustomTable.jsx'
 import CustomDialog from '../../Components/Dialog/CustomDialog.jsx';
-
-import { IoMdAddCircle } from "react-icons/io";
 
 import './Localidades.scss';
 
@@ -16,8 +13,7 @@ const paperHeaderStyle = {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-
-          }
+        }
 
 export default function Localidades() {
 

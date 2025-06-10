@@ -11,32 +11,70 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
   const [form, setForm] = useState({});
   const [paises, setPaises] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
+  const [municipalidades, setMunicipalidades] = useState([]);
 
   const handleClickOpen = () => {
-  setOpen(true);
-  if (mode === 'edit' && data) {
-    // Normaliza los datos según el tipo
-    const normalized = { ...data };
+    setOpen(true);
+    if (mode === 'edit' && data) {
+      // Normaliza los datos según el tipo
+      const normalized = { ...data };
 
-    if (type === 'municipio') {
-      normalized.nombre = data.municipio; // el campo de texto
-      normalized.id_departamento = data.id_departamento || data.departamento_id || ''; // ajusta si es necesario
+      if (type === 'municipio') {
+        normalized.id_pais = data.pais || ''; // puede que debas ajustar esto también
+        normalized.nombre = data.municipio; // el campo de texto
+        normalized.id_departamento = data.departamento || data.departamento || ''; // ajusta si es necesario
+      }
+
+      if (type === 'departamento') {
+        normalized.nombre = data.departamento;
+        normalized.id_pais = data.id_pais || ''; // puede que debas ajustar esto también
+      }
+
+      if (type === 'empresa') {
+        console.log(data);
+        normalized.NIT = data.nit; // Ajustar NIT
+        handleGetDepartmentsByCountry(data.id_pais); // Cargar departamentos del país
+        handleGetMunicipalitiesByDepartment(data.id_departamento); // Cargar municipios del departamento
+        normalized.id_pais = data.id_pais || '';
+        normalized.departamento = data.departamento || '';
+        normalized.municipio = data.municipio || '';
+      }
+
+      setForm(normalized);
+    } else {
+      setForm({});
     }
-
-    if (type === 'departamento') {
-      normalized.nombre = data.departamento;
-      normalized.id_pais = data.id_pais || ''; // puede que debas ajustar esto también
-    }
-
-    setForm(normalized);
-  } else {
-    setForm({});
-  }
-};
+  };
 
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleGetDepartmentsByCountry = (countryId) => {
+    fetch(`http://localhost:4000/departamento/${countryId}/pais`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al obtener departamentos');
+        return res.json();
+      })
+      .then(data => setDepartamentos(data))
+      .catch(err => {
+        console.error('Error fetching departamentos por país:', err);
+        setDepartamentos([]);
+      });
+  };
+
+  const handleGetMunicipalitiesByDepartment = (departmentId) => {
+    fetch(`http://localhost:4000/municipio/${departmentId}/departamento`)
+      .then(res => {
+        if (!res.ok) throw new Error('Error al obtener municipios');
+        return res.json();
+      })
+      .then(data => setMunicipalidades(data))
+      .catch(err => {
+        console.error('Error fetching municipios por departamento:', err);
+        setMunicipalidades([]);
+      });
   };
 
   const handleChange = (field) => (event) => {
@@ -48,17 +86,13 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
         }));
 
         if (field === 'id_pais') {
-            fetch(`http://localhost:4000/departamento/${value}/pais`)
-            .then(res => {
-                if (!res.ok) throw new Error('Error al obtener departamentos');
-                return res.json();
-            })
-            .then(data => setDepartamentos(data))
-            .catch(err => {
-                console.error('Error fetching departamentos por país:', err);
-                setDepartamentos([]);
-            });
+          handleGetDepartmentsByCountry(value);
         }
+
+        if (field === 'id_departamento') {
+          handleGetMunicipalitiesByDepartment(value);
+        }
+
     };
 
     const handleSave = () => {
@@ -80,7 +114,7 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
     pais: ['nombre'],
     departamento: ['id_pais', 'nombre'],
     municipio: ['id_pais','id_departamento','nombre' ],
-    empresa: ['razon_social', 'nombre_comercial', 'telefono', 'correo', 'id_pais', 'id_departamento', 'id_municipio'],
+    empresa: [ 'id_pais', 'id_departamento', 'id_municipio', 'nombre_comercial', 'razon_social', 'NIT','telefono','correo'],
     colaborador: ['nombre_completo', 'edad', 'telefono', 'correo'],
   };
 
@@ -90,6 +124,7 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
     razon_social: 'Razón Social',
     nombre_comercial: 'Nombre Comercial',
     telefono: 'Teléfono',
+    NIT: 'NIT',
     correo: 'Correo',
     edad: 'Edad',
     id_pais: 'País',
@@ -112,20 +147,19 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>{mode === 'edit' ? `Editar ${type}` : `Agregar ${type}`}</DialogTitle>
         <DialogContent>
-          {fieldsByType[type]?.map((field) => {
-            if (field === 'id_pais') {
-              return (
+          {type === 'empresa' ? (
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ flex: 1 }}>
                 <TextField
-                  key={field}
                   select
                   margin="dense"
-                  id={field}
-                  name={field}
-                  label={labels[field]}
+                  id="id_pais"
+                  name="id_pais"
+                  label={labels['id_pais']}
                   fullWidth
                   variant="standard"
-                  value={form[field] || ''}
-                  onChange={handleChange(field)}
+                  value={form['id_pais'] || ''}
+                  onChange={handleChange('id_pais')}
                 >
                   {paises.map((pais) => (
                     <MenuItem key={pais.id} value={pais.id}>
@@ -133,11 +167,67 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
                     </MenuItem>
                   ))}
                 </TextField>
-              );
-            }
-            if (field === 'id_departamento') {
+
+                <TextField
+                  select
+                  margin="dense"
+                  id="id_departamento"
+                  name="id_departamento"
+                  label={labels['id_departamento']}
+                  fullWidth
+                  variant="standard"
+                  value={form['id_departamento'] || ''}
+                  onChange={handleChange('id_departamento')}
+                >
+                  {departamentos.map((dep) => (
+                    <MenuItem key={dep.id} value={dep.id}>
+                      {dep.departamento}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  select
+                  margin="dense"
+                  id="id_municipio"
+                  name="id_municipio"
+                  label={labels['id_municipio']}
+                  fullWidth
+                  variant="standard"
+                  value={form['id_municipio'] || ''}
+                  onChange={handleChange('id_municipio')}
+                >
+                  {municipalidades.map((mun) => (
+                    <MenuItem key={mun.id} value={mun.id}>
+                      {mun.municipio}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+              </div>
+
+              <div style={{ flex: 1 }}>
+                {['nombre_comercial', 'razon_social', 'NIT', 'telefono', 'correo'].map((field) => (
+                  <TextField
+                    key={field}
+                    margin="dense"
+                    id={field}
+                    name={field}
+                    label={labels[field]}
+                    fullWidth
+                    variant="standard"
+                    value={form[field] || ''}
+                    onChange={handleChange(field)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            // comportamiento anterior para otros types
+            fieldsByType[type]?.map((field) => {
+              if (field === 'id_pais') {
                 return (
-                    <TextField
+                  <TextField
                     key={field}
                     select
                     margin="dense"
@@ -148,32 +238,56 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
                     variant="standard"
                     value={form[field] || ''}
                     onChange={handleChange(field)}
-                    >
-                    {departamentos.map((dep) => (
-                        <MenuItem key={dep.id} value={dep.id}>
-                        {dep.departamento}
-                        </MenuItem>
+                  >
+                    {paises.map((pais) => (
+                      <MenuItem key={pais.id} value={pais.id}>
+                        {pais.nombre}
+                      </MenuItem>
                     ))}
-                    </TextField>
+                  </TextField>
                 );
-            }
+              }
+              if (field === 'id_departamento') {
+                return (
+                  <TextField
+                    key={field}
+                    select
+                    margin="dense"
+                    id={field}
+                    name={field}
+                    label={labels[field]}
+                    fullWidth
+                    variant="standard"
+                    value={form[field] || ''}
+                    onChange={handleChange(field)}
+                  >
+                    {departamentos.map((dep) => (
+                      <MenuItem key={dep.id} value={dep.id}>
+                        {dep.departamento}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                );
+              }
 
-            return (
-              <TextField
-                key={field}
-                margin="dense"
-                id={field}
-                name={field}
-                label={labels[field] || field}
-                type={field.includes('id') || field === 'edad' ? 'number' : 'text'}
-                fullWidth
-                variant="standard"
-                value={form[field] || ''}
-                onChange={handleChange(field)}
-              />
-            );
-          })}
+              return (
+                <TextField
+                  key={field}
+                  margin="dense"
+                  id={field}
+                  name={field}
+                  label={labels[field] || field}
+                  type={field.includes('id') || field === 'edad' ? 'number' : 'text'}
+                  fullWidth
+                  variant="standard"
+                  value={form[field] || ''}
+                  onChange={handleChange(field)}
+                />
+              );
+            })
+          )}
         </DialogContent>
+
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
           <Button onClick={handleSave}>Guardar</Button>
