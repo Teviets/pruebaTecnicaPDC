@@ -7,11 +7,12 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
+import CustomDialog from '../Dialog/CustomDialog.jsx';
 
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 
-export default function CustomTable({ data = [], remove }) {
+export default function CustomTable({ data = [], remove, edit, type }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
@@ -67,7 +68,11 @@ export default function CustomTable({ data = [], remove }) {
                     </TableCell>
                   ))}
                 <TableCell align="right">
-                  <button onClick={() => edit(row.id)}><MdModeEditOutline/></button>
+                  <CustomDialog
+                    type={type}
+                    mode="edit"
+                    data={row}
+                    onSubmit={edit}/>
                 </TableCell>
                 <TableCell align="right">
                   <button onClick={() => remove(row.id)}><MdDelete/></button>

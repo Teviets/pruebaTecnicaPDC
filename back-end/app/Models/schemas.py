@@ -29,7 +29,7 @@ class MunicipioBase(BaseModel):
 
 class MunicipioOut(BaseModel):
     id: int
-    departamento: str
+    departamento: Optional[str]
     municipio: str
 
     class Config:

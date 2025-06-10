@@ -13,13 +13,27 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
   const [departamentos, setDepartamentos] = useState([]);
 
   const handleClickOpen = () => {
-    setOpen(true);
-    if (mode === 'edit' && data) {
-      setForm(data);
-    } else {
-      setForm({});
+  setOpen(true);
+  if (mode === 'edit' && data) {
+    // Normaliza los datos según el tipo
+    const normalized = { ...data };
+
+    if (type === 'municipio') {
+      normalized.nombre = data.municipio; // el campo de texto
+      normalized.id_departamento = data.id_departamento || data.departamento_id || ''; // ajusta si es necesario
     }
-  };
+
+    if (type === 'departamento') {
+      normalized.nombre = data.departamento;
+      normalized.id_pais = data.id_pais || ''; // puede que debas ajustar esto también
+    }
+
+    setForm(normalized);
+  } else {
+    setForm({});
+  }
+};
+
 
   const handleClose = () => {
     setOpen(false);
@@ -85,9 +99,15 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
 
   return (
     <>
-      <Button onClick={handleClickOpen}>
-        {mode === 'edit' ? <MdModeEditOutline /> : <IoMdAddCircle size={24} />}
-      </Button>
+      {mode === 'edit' ? (
+        <button onClick={handleClickOpen}>
+          <MdModeEditOutline size={15} />
+        </button>
+      ) : (
+        <Button onClick={handleClickOpen}>
+          <IoMdAddCircle size={24} />
+        </Button>
+      )}
 
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>{mode === 'edit' ? `Editar ${type}` : `Agregar ${type}`}</DialogTitle>

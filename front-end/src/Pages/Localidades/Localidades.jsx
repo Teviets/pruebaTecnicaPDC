@@ -134,6 +134,25 @@ export default function Localidades() {
     });
   }
 
+  const handleUpdateCountry = (updatedCountry) => {
+    fetch(`http://localhost:4000/pais/${updatedCountry.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedCountry),
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    }).then(data => {
+      setPaises(paises.map(pais => pais.id === data.id ? data : pais));
+    }).catch(error => {
+      console.error('There was a problem with the update operation:', error);
+    });
+  };
+
   const handleAddDepartment = (newDepartment) => {
     const payload = {
       nombre: newDepartment.nombre,
@@ -158,6 +177,33 @@ export default function Localidades() {
       })
       .catch(error => {
         console.error('There was a problem with the add operation:', error);
+      });
+  };
+
+  const handleUpdateDepartment = (updatedDepartment) => {
+    const payload = {
+      nombre: updatedDepartment.nombre,
+      id_pais: updatedDepartment.id_pais
+    };
+
+    fetch(`http://localhost:4000/departamento/${updatedDepartment.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setDepartamentos(departamentos.map(departamento => departamento.id === data.id ? data : departamento));
+      })
+      .catch(error => {
+        console.error('There was a problem with the update operation:', error);
       });
   };
 
@@ -186,9 +232,34 @@ export default function Localidades() {
       .catch(error => {
         console.error('There was a problem with the add operation:', error);
       });
-};
+  };
 
+  const handleUpdateMunicipality = (updatedMunicipality) => {
+    const payload = {
+      nombre: updatedMunicipality.nombre,
+      id_departamento: updatedMunicipality.id_departamento,
+    };
 
+    fetch(`http://localhost:4000/municipio/${updatedMunicipality.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setMunicipalidades(municipalidades.map(municipio => municipio.id === data.id ? data : municipio));
+      })
+      .catch(error => {
+        console.error('There was a problem with the update operation:', error);
+      });
+  }
 
   return (
     <Box
@@ -206,21 +277,21 @@ export default function Localidades() {
           <h3>Países</h3>            
           <CustomDialog type="pais" mode="add" onSubmit={handleAddCountry}/>
         </Box>
-        <CustomTable data={paises} remove={handleDeleteCountry}/>
+        <CustomTable data={paises} remove={handleDeleteCountry} edit={handleUpdateCountry} type="pais"/>
       </Paper>
       <Paper className='PapersLocal' elevation={16}>
         <Box sx={paperHeaderStyle}>
           <h3>Departamentos</h3>
           <CustomDialog type="departamento" mode="add" onSubmit={handleAddDepartment}/>
         </Box>
-        <CustomTable data={departamentos} remove={handleDeleteDepartment}/>
+        <CustomTable data={departamentos} remove={handleDeleteDepartment} edit={handleUpdateDepartment} type="departamento"/>
       </Paper>
       <Paper className='PapersLocal' elevation={16} >
         <Box sx={paperHeaderStyle}>
           <h3>Municipalidades</h3>
           <CustomDialog type="municipio" mode="add" onSubmit={handleAddMunicipality}/>
         </Box>
-        <CustomTable data={municipalidades} remove={handleDeleteMunicipality}/>
+        <CustomTable data={municipalidades} remove={handleDeleteMunicipality} edit={handleUpdateMunicipality} type="municipio"/>
       </Paper>
     </Box>
   )

@@ -124,21 +124,28 @@ def get_departments_by_country(
     ]
 
 
-@router.put("/departamento/{id_departamento}")
+@router.put("/departamento/{id}", response_model=schemas.DepartamentoOut)
 def put_department(
-    id_departamento: int,
+    id: int,
     departamento: schemas.DepartamentoBase,
     db: Session = Depends(database.get_db)
-) -> schemas.DepartamentoOut:
-    db_departamento = db.query(models.Departamento).filter(models.Departamento.id == id_departamento).first()
+):
+    db_departamento = db.query(models.Departamento).filter(models.Departamento.id == id).first()
     if not db_departamento:
-        raise HTTPException(status_code=404, detail="Department not found")
-    
+        raise HTTPException(status_code=404, detail="Departamento no encontrado")
+
     db_departamento.nombre = departamento.nombre
     db_departamento.id_pais = departamento.id_pais
+
     db.commit()
     db.refresh(db_departamento)
-    return schemas.DepartamentoOut.from_orm(db_departamento)
+
+    return schemas.DepartamentoOut(
+        id=db_departamento.id,
+        departamento=db_departamento.nombre,
+        pais=db_departamento.pais.nombre
+    )
+
 
 @router.delete("/departamento/{id_departamento}")
 def delete_department(
@@ -189,34 +196,12 @@ def get_municipalities(
         for m in municipios
     ]
 
-@router.get("/municipio/{id_departamento}/departamento", response_model=list[schemas.MunicipioOut])
-def get_municipalities_by_department(
-    id_departamento: int,
-    db: Session = Depends(database.get_db)
-) -> list[schemas.MunicipioOut]:
-    db_municipios = db.query(models.Municipio).filter(models.Municipio.id_departamento == id_departamento).all()
-    if not db_municipios:
-        raise HTTPException(status_code=404, detail="No municipalities found for this department")
-    
-    return [schemas.MunicipioOut.from_orm(municipio) for municipio in db_municipios]
-
-
-@router.get("/municipio/{id_municipio}", response_model=schemas.MunicipioOut)
-def get_municipality(
-    id_municipio: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.MunicipioOut:
-    db_municipio = db.query(models.Municipio).filter(models.Municipio.id == id_municipio).first()
-    if not db_municipio:
-        raise HTTPException(status_code=404, detail="Municipality not found")
-    return schemas.MunicipioOut.from_orm(db_municipio)
-
-@router.put("/municipio/{id_municipio}")
+@router.put("/municipio/{id_municipio}", response_model=schemas.MunicipioOut)
 def put_municipality(
     id_municipio: int,
     municipio: schemas.MunicipioBase,
     db: Session = Depends(database.get_db)
-) -> schemas.MunicipioOut:
+):
     db_municipio = db.query(models.Municipio).filter(models.Municipio.id == id_municipio).first()
     if not db_municipio:
         raise HTTPException(status_code=404, detail="Municipality not found")
@@ -225,7 +210,15 @@ def put_municipality(
     db_municipio.id_departamento = municipio.id_departamento
     db.commit()
     db.refresh(db_municipio)
-    return schemas.MunicipioOut.from_orm(db_municipio)
+
+    return schemas.MunicipioOut(
+        id=db_municipio.id,
+        municipio=db_municipio.nombre,
+        departamento=db_municipio.departamento.nombre
+    )
+
+
+
 
 @router.delete("/municipio/{id_municipio}")
 def delete_municipality(
