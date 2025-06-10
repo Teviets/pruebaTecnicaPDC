@@ -1,0 +1,91 @@
+import React, { useState } from 'react'
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
+
+import { MdModeEditOutline } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
+
+export default function CustomTable({ data = [], remove }) {
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  if (!data.length) return <p>No hay datos para mostrar.</p>
+
+  const columns = Object.keys(data[0]).map((key) => ({
+    id: key,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    minWidth: 100,
+    align: 'left',
+  }))
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
+  };
+
+  return (
+    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ maxHeight: 440 }}>
+        <Table stickyHeader aria-label="tabla dinámica">
+          <TableHead>
+            <TableRow>
+              {columns
+                .filter((column) => column.id !== 'id')
+                .map((column) => (
+                  <TableCell
+                    key={column.id}
+                    align={column.align}
+                    style={{ minWidth: column.minWidth }}
+                  >
+                    {column.label}
+                  </TableCell>
+              ))}
+              <TableCell align="right" style={{ minWidth: 100 }}>Editar</TableCell>
+              <TableCell align="right" style={{ minWidth: 100 }}>Eliminar</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data
+            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            .map((row, rowIndex) => (
+              <TableRow hover tabIndex={-1} key={rowIndex}>
+                {columns
+                  .filter((column) => column.id !== 'id')
+                  .map((column) => (
+                    <TableCell key={column.id} align={column.align}>
+                      {String(row[column.id])}
+                    </TableCell>
+                  ))}
+                <TableCell align="right">
+                  <button onClick={() => edit(row.id)}><MdModeEditOutline/></button>
+                </TableCell>
+                <TableCell align="right">
+                  <button onClick={() => remove(row.id)}><MdDelete/></button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={data.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </Paper>
+  )
+}

@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: PDC
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+
   frontend:
     build: ./front-end
     ports:
@@ -21,19 +35,11 @@ services:
       - ./back-end:/app
     depends_on:
       - db
-
-  db:
-    image: postgres:15
-    restart: always
     environment:
-      POSTGRES_DB: PDC
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "15432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db-init:/docker-entrypoint-initdb.d
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/PDC
+    working_dir: /app
+
+
 
 volumes:
   postgres_data:
