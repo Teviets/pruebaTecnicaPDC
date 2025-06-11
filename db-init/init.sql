@@ -43,8 +43,8 @@ CREATE TABLE colaborador (
 -- Relación N a N (si activas la opción de múltiples empresas)
 CREATE TABLE empresa_colaborador (
     id SERIAL PRIMARY KEY,
-    id_empresa INT REFERENCES empresa(id),
-    id_colaborador INT REFERENCES colaborador(id)
+    id_empresa INT REFERENCES empresa(id) ON DELETE CASCADE,
+    id_colaborador INT REFERENCES colaborador(id) ON DELETE CASCADE
 );
 
 -- Insertar datos de ejemplo

@@ -380,239 +380,122 @@ def delete_company(
     db.commit()
     return {"message": "Company deleted successfully"}
 
-@router.post("/colaborador/")
-def post_collaborators(
-    colaborador: schemas.ColaboradorBase,
+@router.get("/colaborador/", response_model=list[schemas.EmpresaColaboradorOut])
+def get_company_collaborators(
     db: Session = Depends(database.get_db)
-) -> schemas.ColaboradorOut:
+) -> list[schemas.EmpresaColaboradorOut]:
+    empresa_colaboradores = db.query(models.EmpresaColaborador).all()
+    result = []
+    for ec in empresa_colaboradores:
+        colaborador = db.query(models.Colaborador).filter(models.Colaborador.id == ec.id_colaborador).first()
+        empresa = db.query(models.Empresa).filter(models.Empresa.id == ec.id_empresa).first()
+        if colaborador and empresa:
+            result.append(schemas.EmpresaColaboradorOut(
+                id_colaborador=colaborador.id,
+                id_empresa=empresa.id,
+                nombre_empresa=empresa.nombre_comercial or empresa.razon_social,
+                nombre_colaborador=colaborador.nombre_completo,
+                edad=colaborador.edad,
+                telefono=colaborador.telefono,
+                correo=colaborador.correo
+            ))
+    return result
+
+@router.post("/colaborador/", response_model=schemas.EmpresaColaboradorOut)
+def post_colaborador_with_empresa(
+    payload: schemas.ColaboradorConEmpresa,
+    db: Session = Depends(database.get_db)
+):
+    # Crear colaborador
     db_colaborador = models.Colaborador(
-        nombre_completo=colaborador.nombre_completo,
-        edad=colaborador.edad,
-        telefono=colaborador.telefono,
-        correo=colaborador.correo
+        nombre_completo=payload.nombre_completo,
+        edad=payload.edad,
+        telefono=payload.telefono,
+        correo=payload.correo
     )
     db.add(db_colaborador)
     db.commit()
     db.refresh(db_colaborador)
-    return schemas.ColaboradorOut.from_orm(db_colaborador)
 
-@router.get("/colaborador/", response_model=list[schemas.ColaboradorOut])
-def get_collaborators(
-    db: Session = Depends(database.get_db)
-) -> list[schemas.ColaboradorOut]:
-    colaboradores = db.query(models.Colaborador).all()
-    return [schemas.ColaboradorOut.from_orm(colaborador) for colaborador in colaboradores]
-
-@router.put("/colaborador/{id_colaborador}")
-def put_collaborator(
-    id_colaborador: int,
-    colaborador: schemas.ColaboradorBase,
-    db: Session = Depends(database.get_db)
-) -> schemas.ColaboradorOut:
-    db_colaborador = db.query(models.Colaborador).filter(models.Colaborador.id == id_colaborador).first()
-    if not db_colaborador:
-        raise HTTPException(status_code=404, detail="Collaborator not found")
-    
-    db_colaborador.nombre_completo = colaborador.nombre_completo
-    db_colaborador.edad = colaborador.edad
-    db_colaborador.telefono = colaborador.telefono
-    db_colaborador.correo = colaborador.correo
-    db.commit()
-    db.refresh(db_colaborador)
-    return schemas.ColaboradorOut.from_orm(db_colaborador)
-
-@router.delete("/colaborador/{id_colaborador}")
-def delete_collaborator(
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> dict:
-    db_colaborador = db.query(models.Colaborador).filter(models.Colaborador.id == id_colaborador).first()
-    if not db_colaborador:
-        raise HTTPException(status_code=404, detail="Collaborator not found")
-    
-    db.delete(db_colaborador)
-    db.commit()
-    return {"message": "Collaborator deleted successfully"}
-
-@router.post("/empresa_colaborador/")
-def post_company_collaborator(
-    empresa_colaborador: schemas.EmpresaColaboradorBase,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
+    # Crear relación con empresa
     db_empresa_colaborador = models.EmpresaColaborador(
-        id_empresa=empresa_colaborador.id_empresa,
-        id_colaborador=empresa_colaborador.id_colaborador
+        id_empresa=payload.id_empresa,
+        id_colaborador=db_colaborador.id
     )
     db.add(db_empresa_colaborador)
     db.commit()
-    db.refresh(db_empresa_colaborador)
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
 
-@router.get("/empresa_colaborador/", response_model=list[schemas.EmpresaColaboradorBase])
-def get_company_collaborators(
-    db: Session = Depends(database.get_db)
-) -> list[schemas.EmpresaColaboradorBase]:
-    empresa_colaboradores = db.query(models.EmpresaColaborador).all()
-    return [schemas.EmpresaColaboradorBase.from_orm(ec) for ec in empresa_colaboradores]
+    # Obtener nombre de la empresa
+    empresa = db.query(models.Empresa).filter(models.Empresa.id == payload.id_empresa).first()
 
-@router.put("/empresa_colaborador/{id_empresa_colaborador}")
-def put_company_collaborator(
-    id_empresa_colaborador: int,
-    empresa_colaborador: schemas.EmpresaColaboradorBase,
+    return schemas.EmpresaColaboradorOut(
+        id_colaborador=db_colaborador.id,
+        id_empresa=empresa.id,
+        nombre_colaborador=db_colaborador.nombre_completo,
+        nombre_empresa=empresa.nombre_comercial or empresa.razon_social,
+        edad=db_colaborador.edad,
+        telefono=db_colaborador.telefono,
+        correo=db_colaborador.correo
+    )
+
+
+@router.put("/colaborador/{id_colaborador}", response_model=schemas.EmpresaColaboradorOut)
+def put_colaborador_with_empresa(
+    id_colaborador: int,
+    payload: schemas.ColaboradorConEmpresa,
     db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id == id_empresa_colaborador).first()
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Company Collaborator not found")
-    
-    db_empresa_colaborador.id_empresa = empresa_colaborador.id_empresa
-    db_empresa_colaborador.id_colaborador = empresa_colaborador.id_colaborador
+):
+    # Buscar colaborador
+    db_colaborador = db.query(models.Colaborador).filter(models.Colaborador.id == id_colaborador).first()
+    if not db_colaborador:
+        raise HTTPException(status_code=404, detail="Colaborador no encontrado")
+
+    # Actualizar datos del colaborador
+    db_colaborador.nombre_completo = payload.nombre_completo
+    db_colaborador.edad = payload.edad
+    db_colaborador.telefono = payload.telefono
+    db_colaborador.correo = payload.correo
     db.commit()
-    db.refresh(db_empresa_colaborador)
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
 
-@router.delete("/empresa_colaborador/{id_empresa_colaborador}")
-def delete_company_collaborator(
-    id_empresa_colaborador: int,
+    # Actualizar relación con empresa
+    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
+        models.EmpresaColaborador.id_colaborador == id_colaborador
+    ).first()
+
+    if db_empresa_colaborador:
+        db_empresa_colaborador.id_empresa = payload.id_empresa
+    else:
+        db_empresa_colaborador = models.EmpresaColaborador(
+            id_colaborador=id_colaborador,
+            id_empresa=payload.id_empresa
+        )
+        db.add(db_empresa_colaborador)
+
+    db.commit()
+
+    empresa = db.query(models.Empresa).filter(models.Empresa.id == payload.id_empresa).first()
+
+    return schemas.EmpresaColaboradorOut(
+        id_colaborador=id_colaborador,
+        id_empresa=empresa.id,
+        nombre_colaborador=db_colaborador.nombre_completo,
+        nombre_empresa=empresa.nombre_comercial or empresa.razon_social,
+        edad=db_colaborador.edad,
+        telefono=db_colaborador.telefono,
+        correo=db_colaborador.correo
+    )
+
+@router.delete("/colaborador/{id_colaborador}")
+def delete_colaborador_with_empresa(
+    id_colaborador: int,
     db: Session = Depends(database.get_db)
 ) -> dict:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id == id_empresa_colaborador).first()
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Company Collaborator not found")
+    db_colaborador = db.query(models.Colaborador).filter(models.Colaborador.id == id_colaborador).first()
+    if not db_colaborador:
+        raise HTTPException(status_code=404, detail="Colaborador not found")
     
-    db.delete(db_empresa_colaborador)
+    
+    db.delete(db_colaborador)
     db.commit()
-    return {"message": "Company Collaborator deleted successfully"}
-
-@router.get("/empresa_colaborador/{id_empresa}")
-def get_collaborators_by_company(
-    id_empresa: int,
-    db: Session = Depends(database.get_db)
-) -> list[schemas.ColaboradorOut]:
-    empresa_colaboradores = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id_empresa == id_empresa).all()
-    colaboradores = [db.query(models.Colaborador).filter(models.Colaborador.id == ec.id_colaborador).first() for ec in empresa_colaboradores]
-    return [schemas.ColaboradorOut.from_orm(colaborador) for colaborador in colaboradores if colaborador]
-
-@router.get("/empresa_colaborador/colaborador/{id_colaborador}")
-def get_companies_by_collaborator(
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> list[schemas.EmpresaOut]:
-    empresa_colaboradores = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id_colaborador == id_colaborador).all()
-    empresas = [db.query(models.Empresa).filter(models.Empresa.id == ec.id_empresa).first() for ec in empresa_colaboradores]
-    return [schemas.EmpresaOut.from_orm(empresa) for empresa in empresas if empresa]
-
-@router.get("/empresa_colaborador/colaborador/{id_colaborador}/empresa/{id_empresa}")
-def get_collaborator_in_company(
-    id_colaborador: int,
-    id_empresa: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_colaborador == id_colaborador,
-        models.EmpresaColaborador.id_empresa == id_empresa
-    ).first()
     
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Collaborator not found in the specified company")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
-@router.get("/empresa_colaborador/empresa/{id_empresa}/colaborador/{id_colaborador}")
-def get_company_collaborator(
-    id_empresa: int,
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_empresa == id_empresa,
-        models.EmpresaColaborador.id_colaborador == id_colaborador
-    ).first()
-    
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Company Collaborator not found")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
-@router.get("/empresa_colaborador/empresa/{id_empresa}/colaborador")
-def get_company_collaborators(
-    id_empresa: int,
-    db: Session = Depends(database.get_db)
-) -> list[schemas.ColaboradorOut]:
-    empresa_colaboradores = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id_empresa == id_empresa).all()
-    colaboradores = [db.query(models.Colaborador).filter(models.Colaborador.id == ec.id_colaborador).first() for ec in empresa_colaboradores]
-    return [schemas.ColaboradorOut.from_orm(colaborador) for colaborador in colaboradores if colaborador]
-
-@router.get("/empresa_colaborador/colaborador/{id_colaborador}/empresa")
-def get_collaborator_companies(
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> list[schemas.EmpresaOut]:
-    empresa_colaboradores = db.query(models.EmpresaColaborador).filter(models.EmpresaColaborador.id_colaborador == id_colaborador).all()
-    empresas = [db.query(models.Empresa).filter(models.Empresa.id == ec.id_empresa).first() for ec in empresa_colaboradores]
-    return [schemas.EmpresaOut.from_orm(empresa) for empresa in empresas if empresa]
-
-@router.get("/empresa_colaborador/empresa/{id_empresa}/colaborador/{id_colaborador}")
-def get_company_collaborator_details(
-    id_empresa: int,
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_empresa == id_empresa,
-        models.EmpresaColaborador.id_colaborador == id_colaborador
-    ).first()
-    
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Company Collaborator not found")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
-@router.get("/empresa_colaborador/colaborador/{id_colaborador}/empresa/{id_empresa}")
-def get_collaborator_company_details(
-    id_colaborador: int,
-    id_empresa: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_colaborador == id_colaborador,
-        models.EmpresaColaborador.id_empresa == id_empresa
-    ).first()
-    
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Collaborator not found in the specified company")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
-@router.get("/empresa_colaborador/empresa/{id_empresa}/colaborador/{id_colaborador}/details")
-def get_company_collaborator_details_full(
-    id_empresa: int,
-    id_colaborador: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_empresa == id_empresa,
-        models.EmpresaColaborador.id_colaborador == id_colaborador
-    ).first()
-    
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Company Collaborator not found")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
-@router.get("/empresa_colaborador/colaborador/{id_colaborador}/empresa/{id_empresa}/details")
-def get_collaborator_company_details_full(
-    id_colaborador: int,
-    id_empresa: int,
-    db: Session = Depends(database.get_db)
-) -> schemas.EmpresaColaboradorBase:
-    db_empresa_colaborador = db.query(models.EmpresaColaborador).filter(
-        models.EmpresaColaborador.id_colaborador == id_colaborador,
-        models.EmpresaColaborador.id_empresa == id_empresa
-    ).first()
-    
-    if not db_empresa_colaborador:
-        raise HTTPException(status_code=404, detail="Collaborator not found in the specified company")
-    
-    return schemas.EmpresaColaboradorBase.from_orm(db_empresa_colaborador)
-
+    return {"message": "Colaborador deleted successfully"}

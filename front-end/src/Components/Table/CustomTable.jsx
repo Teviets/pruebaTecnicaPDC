@@ -12,7 +12,7 @@ import CustomDialog from '../Dialog/CustomDialog.jsx';
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 
-const excludedColumns = ['id', 'id_pais', 'id_departamento', 'id_municipio', 'id_emporesa'];
+const excludedColumns = ['id', 'id_pais', 'id_departamento', 'id_municipio', 'id_empresa', 'id_colaborador'];
 
 export default function CustomTable({ data = [], remove, edit, type }) {
   const [page, setPage] = React.useState(0);
@@ -80,7 +80,13 @@ export default function CustomTable({ data = [], remove, edit, type }) {
                     onSubmit={edit}/>
                 </TableCell>
                 <TableCell align="right">
-                  <button onClick={() => remove(row.id)}><MdDelete/></button>
+                  <button onClick={() => {
+                      if (type === 'colaborador') {
+                        remove(row.id_colaborador)
+                      }else{
+                        remove(row.id)
+                      }
+                    }}><MdDelete/></button>
                 </TableCell>
               </TableRow>
             ))}

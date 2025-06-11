@@ -13,6 +13,8 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
   const [departamentos, setDepartamentos] = useState([]);
   const [municipalidades, setMunicipalidades] = useState([]);
 
+  const [empresas, setEmpresas] = useState([]);
+
   const handleClickOpen = () => {
     setOpen(true);
     if (mode === 'edit' && data) {
@@ -40,6 +42,12 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
         normalized.municipio = data.municipio || '';
       }
 
+      if (type === 'colaborador') {
+        normalized.nombre_completo = data.nombre_colaborador || '';
+        normalized.id_empresa = data.id_empresa || '';
+      }
+
+
       setForm(normalized);
     } else {
       setForm({});
@@ -49,6 +57,16 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleGetCompanies = () => {
+    fetch('http://localhost:4000/empresa')
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => setEmpresas(data))
+      .catch(error => console.error('Fetch error:', error));
   };
 
   const handleGetDepartmentsByCountry = (countryId) => {
@@ -107,6 +125,9 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
             .then(data => setPaises(data))
             .catch(err => console.error('Error fetching países:', err));
         }
+        if (type === 'colaborador') {
+            handleGetCompanies();
+        }
     }, [type]);
 
 
@@ -115,11 +136,12 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
     departamento: ['id_pais', 'nombre'],
     municipio: ['id_pais','id_departamento','nombre' ],
     empresa: [ 'id_pais', 'id_departamento', 'id_municipio', 'nombre_comercial', 'razon_social', 'NIT','telefono','correo'],
-    colaborador: ['nombre_completo', 'edad', 'telefono', 'correo'],
+    colaborador: ['id_empresa','nombre_completo', 'edad', 'telefono', 'correo'],
   };
 
   const labels = {
     nombre: 'Nombre',
+    id_empresa: 'Empresa',
     nombre_completo: 'Nombre Completo',
     razon_social: 'Razón Social',
     nombre_comercial: 'Nombre Comercial',
@@ -264,6 +286,28 @@ export default function CustomDialog({ type, mode, data, onSubmit }) {
                     {departamentos.map((dep) => (
                       <MenuItem key={dep.id} value={dep.id}>
                         {dep.departamento}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                );
+              }
+              if (field === 'id_empresa') {
+                return (
+                  <TextField
+                    key={field}
+                    select
+                    margin="dense"
+                    id={field}
+                    name={field}
+                    label={labels[field]}
+                    fullWidth
+                    variant="standard"
+                    value={form[field] || ''}
+                    onChange={handleChange(field)}
+                  >
+                    {empresas.map((empresa) => (
+                      <MenuItem key={empresa.id} value={empresa.id}>
+                        {empresa.nombre_comercial || empresa.razon_social}
                       </MenuItem>
                     ))}
                   </TextField>

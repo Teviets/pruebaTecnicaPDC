@@ -11,8 +11,7 @@ const paperHeaderStyle = {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-
-          }
+        }
 
 export default function Empresa() {
   const [empresas, setEmpresas] = useState([]);
@@ -108,8 +107,7 @@ export default function Empresa() {
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        // Aquí puedes actualizar la lista de empresas o mostrar mensaje de éxito
-        console.log('Empresa eliminada');
+        loadCompanies();
       })
       .catch(error => {
         console.error('Hubo un error al eliminar la empresa:', error);
@@ -131,7 +129,7 @@ export default function Empresa() {
       >
         <Paper className='PapersLocal' elevation={16} >
           <Box sx={paperHeaderStyle}>
-            <h3>Países</h3>            
+            <h3>Empresas</h3>            
             <CustomDialog type="empresa" mode="add" onSubmit={handleAddCompany} />
           </Box>
           <CustomTable data={empresas} type="empresa" remove={handleDeleteCompany} edit={handleUpdateCompany}/>

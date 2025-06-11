@@ -80,7 +80,23 @@ class EmpresaColaboradorBase(BaseModel):
     id_empresa: int
     id_colaborador: int
 
-class EmpresaColaboradorOut(EmpresaColaboradorBase):
-    id: int
+class EmpresaColaboradorOut(BaseModel):
+    id_colaborador: int
+    id_empresa: int
+    nombre_empresa: str
+    nombre_colaborador: str
+    edad: Optional[int] = None
+    telefono: Optional[str] = None
+    correo: Optional[str] = None
+    
+
     class Config:
         from_attributes = True
+
+class ColaboradorConEmpresa(BaseModel):
+    nombre_completo: str
+    edad: Optional[int] = None
+    telefono: Optional[str] = None
+    correo: Optional[str] = None
+    id_empresa: int
+
