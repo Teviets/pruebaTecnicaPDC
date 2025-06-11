@@ -1,3 +1,15 @@
 #root {
   text-align: center;
 }
+
+@media screen and (max-width: 768px) {
+  .MainContent {
+    padding: 0.5rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .MainContent {
+    padding: 0.25rem;
+  }
+}
