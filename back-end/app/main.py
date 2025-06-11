@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  # ⬅️ Importar CORS
 from app.database import engine, Base
-from app.routers import items
+from app.routers import  Localidades, Companies, Colaborators
 import time
 from sqlalchemy.exc import OperationalError
 
@@ -37,4 +37,7 @@ else:
     raise Exception("❌ No se pudo conectar a la base de datos después de varios intentos.")
 
 # 📦 Rutas
-app.include_router(items.router)
+#app.include_router(items.router)
+app.include_router(Localidades.router)
+app.include_router(Companies.router)
+app.include_router(Colaborators.router)

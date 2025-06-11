@@ -262,10 +262,12 @@ export default function Localidades() {
       sx={{
         display: 'flex',
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 2,
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         height: '85vh',
-        padding: 2,
+        padding: 12,
       }}
       >
       <Paper className='PapersLocal' elevation={16} >

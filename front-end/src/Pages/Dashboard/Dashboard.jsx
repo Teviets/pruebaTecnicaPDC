@@ -1,7 +1,9 @@
 import React from 'react'
-
+import pdc from '../../assets/pdc.png'
 export default function Dashboard() {
   return (
-    <div>Dashboard</div>
+    <div>
+      <img src={pdc} alt="" />
+    </div>
   )
 }

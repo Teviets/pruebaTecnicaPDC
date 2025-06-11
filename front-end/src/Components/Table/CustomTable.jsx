@@ -9,7 +9,6 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import CustomDialog from '../Dialog/CustomDialog.jsx';
 
-import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 
 const excludedColumns = ['id', 'id_pais', 'id_departamento', 'id_municipio', 'id_empresa', 'id_colaborador'];
